@@ -1,0 +1,44 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/clang++",
+      "-std=c++17",
+      "-Iinclude/imgui",
+      "-Iinclude/imgui/backends",
+      "-g",
+      "-Wall",
+      "-Wformat",
+      "-I/usr/local/include",
+      "-I/opt/local/include",
+      "-I/opt/homebrew/include",
+      "-c",
+      "-o",
+      "Window.o",
+      "src/Window.cpp"
+    ],
+    "directory": "/Users/abdoulayedia/Projects/Dev/C++/sprite_editor",
+    "file": "/Users/abdoulayedia/Projects/Dev/C++/sprite_editor/src/Window.cpp",
+    "output": "/Users/abdoulayedia/Projects/Dev/C++/sprite_editor/Window.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang++",
+      "-std=c++17",
+      "-Iinclude/imgui",
+      "-Iinclude/imgui/backends",
+      "-g",
+      "-Wall",
+      "-Wformat",
+      "-I/usr/local/include",
+      "-I/opt/local/include",
+      "-I/opt/homebrew/include",
+      "-c",
+      "-o",
+      "main.o",
+      "src/main.cpp"
+    ],
+    "directory": "/Users/abdoulayedia/Projects/Dev/C++/sprite_editor",
+    "file": "/Users/abdoulayedia/Projects/Dev/C++/sprite_editor/src/main.cpp",
+    "output": "/Users/abdoulayedia/Projects/Dev/C++/sprite_editor/main.o"
+  }
+]
