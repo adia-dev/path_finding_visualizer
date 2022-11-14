@@ -45,12 +45,24 @@ namespace se
         ImGui::CreateContext();
         ImGuiIO &io = ImGui::GetIO();
         (void)io;
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+        // io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;   // Enable Docking
+        io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable; // Enable Multi-Viewport / Platform Windows
         // io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
         // io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
         // Setup Dear ImGui style
         ImGui::StyleColorsDark();
         // ImGui::StyleColorsLight();
+
+        // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
+        ImGuiStyle &style = ImGui::GetStyle();
+        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+        {
+            style.WindowRounding = 0.0f;
+            style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+        }
 
         // Setup Platform/Renderer backends
         ImGui_ImplGlfw_InitForOpenGL(_window, true);
@@ -108,9 +120,86 @@ namespace se
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
+        static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
+        ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+
+        const ImGuiViewport *viewport = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos(viewport->WorkPos);
+        ImGui::SetNextWindowSize(viewport->WorkSize);
+        ImGui::SetNextWindowViewport(viewport->ID);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+        window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+        window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+
+        static bool p_open = true;
+        ImGui::Begin("DockSpace Demo", &p_open, window_flags);
+
+        ImGui::PopStyleVar();
+        ImGui::PopStyleVar(2);
+
+        ImGuiIO &io = ImGui::GetIO();
+        if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+        {
+            ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+            ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+        }
+
         // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
         if (_show_demo_window)
             ImGui::ShowDemoWindow(&_show_demo_window);
+
+        if (ImGui::BeginMenuBar())
+        {
+            if (ImGui::BeginMenu("Options"))
+            {
+                // Disabling fullscreen would allow the window to be moved to the front of other windows,
+                // which we can't undo at the moment without finer window depth/z control.
+                ImGui::MenuItem("Fullscreen");
+                ImGui::MenuItem("Padding");
+                ImGui::Separator();
+
+                if (ImGui::MenuItem("Flag: NoSplit", "", (dockspace_flags & ImGuiDockNodeFlags_NoSplit) != 0))
+                {
+                    dockspace_flags ^= ImGuiDockNodeFlags_NoSplit;
+                }
+                if (ImGui::MenuItem("Flag: NoResize", "", (dockspace_flags & ImGuiDockNodeFlags_NoResize) != 0))
+                {
+                    dockspace_flags ^= ImGuiDockNodeFlags_NoResize;
+                }
+                if (ImGui::MenuItem("Flag: NoDockingInCentralNode", "", (dockspace_flags & ImGuiDockNodeFlags_NoDockingInCentralNode) != 0))
+                {
+                    dockspace_flags ^= ImGuiDockNodeFlags_NoDockingInCentralNode;
+                }
+                if (ImGui::MenuItem("Flag: AutoHideTabBar", "", (dockspace_flags & ImGuiDockNodeFlags_AutoHideTabBar) != 0))
+                {
+                    dockspace_flags ^= ImGuiDockNodeFlags_AutoHideTabBar;
+                }
+                ImGui::Separator();
+
+                ImGui::EndMenu();
+            }
+            HelpMarker(
+                "When docking is enabled, you can ALWAYS dock MOST window into another! Try it now!"
+                "\n"
+                "- Drag from window title bar or their tab to dock/undock."
+                "\n"
+                "- Drag from window menu button (upper-left button) to undock an entire node (all windows)."
+                "\n"
+                "- Hold SHIFT to disable docking (if io.ConfigDockingWithShift == false, default)"
+                "\n"
+                "- Hold SHIFT to enable docking (if io.ConfigDockingWithShift == true)"
+                "\n"
+                "This demo app has nothing to do with enabling docking!"
+                "\n\n"
+                "This demo app only demonstrate the use of ImGui::DockSpace() which allows you to manually create a docking node _within_ another window."
+                "\n\n"
+                "Read comments in ShowExampleAppDockSpace() for more details.");
+
+            ImGui::EndMenuBar();
+        }
 
         // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
         {
@@ -167,6 +256,8 @@ namespace se
             ImGui::End();
         }
 
+        ImGui::End();
+
         // Rendering
         ImGui::Render();
         int display_w, display_h;
@@ -175,6 +266,14 @@ namespace se
         glClearColor(_clear_color.x * _clear_color.w, _clear_color.y * _clear_color.w, _clear_color.z * _clear_color.w, _clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+        {
+            GLFWwindow *backup_current_context = glfwGetCurrentContext();
+            ImGui::UpdatePlatformWindows();
+            ImGui::RenderPlatformWindowsDefault();
+            glfwMakeContextCurrent(backup_current_context);
+        }
 
         glfwSwapBuffers(_window);
     }
