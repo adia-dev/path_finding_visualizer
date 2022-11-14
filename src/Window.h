@@ -65,9 +65,9 @@ namespace se
     private:
         /* data */
         GLFWwindow *_window = nullptr;
+        std::string _glsl_version = "#version 330";
 
         bool _show_demo_window = true;
-        bool _show_another_window = false;
         const char *_window_title = "Hello, world!";
         ImVec4 _clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
@@ -75,6 +75,14 @@ namespace se
         {
             fprintf(stderr, "Glfw Error %d: %s\n", error, description);
         }
+
+        void SetupImGui();
+        void SetupOpenGL();
+
+        // UI Elements to be rendered
+        void MainMenuBar();
+
+        void Cleanup();
     };
 
 }
