@@ -41,7 +41,9 @@ namespace se
         Window &operator=(Window &&) = delete;
 
         void Play();
+        void Playground();
         void Render();
+        void RenderPlayground();
 
         static Window &Get()
         {
@@ -66,6 +68,12 @@ namespace se
         /* data */
         GLFWwindow *_window = nullptr;
         std::string _glsl_version = "#version 330";
+        /* Playgound Data */
+        std::string _working_dir;
+        char _input_buffer[256];
+        std::vector<std::string> _directory_filenames;
+        bool _include_directories = false;
+        bool _relative_paths = false;
 
         bool _show_demo_window = true;
         const char *_window_title = "Hello, world!";

@@ -105,4 +105,8 @@ run: $(EXE)
 	@echo "\033[32mPress Ctrl+C to exit\033[0m"
 	@./$(EXE)
 
-r: recompile run
+playground:
+	@echo "\033[32mRunning $(EXE) playground\033[0m"
+	@echo "\033[32mPress Ctrl+C to exit\033[0m"
+	make recompile
+	@./$(EXE) -playground

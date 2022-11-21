@@ -1,6 +1,7 @@
 #pragma once
 
 #include <filesystem>
+#include <vector>
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -72,6 +73,28 @@ namespace se
         static std::string GetDirectory(const std::string &path)
         {
             return fs::path(path).parent_path().string();
+        }
+
+        static std::vector<std::string> GetDirectoryFileNames(const std::string &path, bool include_directories = true, bool relative_paths = true)
+        {
+            if (!IsDirectory(path))
+                return {};
+
+            const fs::path directoryPath = GetAbsolutePath(path);
+            std::vector<std::string> fileNames;
+
+            for (auto const &dir_entry : fs::directory_iterator{directoryPath})
+            {
+                if (dir_entry.is_directory() && !include_directories)
+                    continue;
+
+                if (relative_paths)
+                    fileNames.push_back(dir_entry.path().relative_path().string());
+                else
+                    fileNames.push_back(dir_entry.path().string());
+            }
+
+            return fileNames;
         }
 
         static std::string GetAbsolutePath(const std::string &path)

@@ -10,12 +10,21 @@ set(PROJECT_NAME app)
 project(${PROJECT_NAME} C CXX)
 
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Debug CACHE STRING "" FORCE)
+    set(CONFIGURATION_TYPES "Debug;Release;Playground")
+    set(CMAKE_CONFIGURATION_TYPES ${CONFIGURATION_TYPES} CACHE STRING "Configurations" FORCE)
+    set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build." FORCE)
+else()
+    set(CONFIGURATION_TYPES ${CMAKE_CONFIGURATION_TYPES})
 endif()
+
+set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS ${CONFIGURATION_TYPES})
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DVK_PROTOTYPES")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DVK_PROTOTYPES")
+
+# Directories
+set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 # GLFW
 set(GLFW_DIR include/glfw) # Set this to point to an up-to-date GLFW repo
@@ -43,9 +52,13 @@ file(GLOB sources src/*.cpp)
 set(IMGUI_SRC ${IMGUI_DIR}/imgui.cpp ${IMGUI_DIR}/imgui_demo.cpp ${IMGUI_DIR}/imgui_draw.cpp ${IMGUI_DIR}/imgui_tables.cpp ${IMGUI_DIR}/imgui_widgets.cpp)
 set(GLFW_SRC ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp)
 
-add_definitions(-D__DIR__=\"$(SOURCES_DIR)/\" -D__LOG__=\"\" -D__LOG_TO_FILE__)
+add_definitions(-D__DIR__=\"\" -D__LOG__=\"\" -D__LOG_TO_FILE__)
 
 add_executable(${PROJECT_NAME} ${sources} ${IMGUI_SRC} ${GLFW_SRC})
 target_link_libraries(${PROJECT_NAME} ${LIBRARIES})
+
+if(${CMAKE_BUILD_TYPE} STREQUAL "Playground")
+    target_compile_options(${PROJECT_NAME} PRIVATE -D__PLAYGROUND_MODE__)
+endif()
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC -DImTextureID=ImU64)

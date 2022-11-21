@@ -8,6 +8,9 @@ namespace se
         SetupOpenGL();
         SetupImGui();
 
+        _working_dir = File::GetWorkingDirectory().c_str();
+        strncpy(_input_buffer, _working_dir.c_str(), _working_dir.length());
+
         Logger::Logln("Window created", Colors::Green);
     }
 
@@ -112,6 +115,14 @@ namespace se
         }
     }
 
+    void Window::Playground()
+    {
+        while (!glfwWindowShouldClose(_window))
+        {
+            RenderPlayground();
+        }
+    }
+
     void Window::Render()
     {
         // Poll and handle events (inputs, window resize, etc.)
@@ -180,6 +191,161 @@ namespace se
         glfwSwapBuffers(_window);
     }
 
+    void Window::RenderPlayground()
+    {
+        // Poll and handle events (inputs, window resize, etc.)
+        // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
+        // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
+        // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
+        // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
+        glfwPollEvents();
+
+        // Start the Dear ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
+        ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+
+        const ImGuiViewport *viewport = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos(viewport->WorkPos);
+        ImGui::SetNextWindowSize(viewport->WorkSize);
+        ImGui::SetNextWindowViewport(viewport->ID);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+        window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+        window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+
+        static bool p_open = true;
+        ImGui::Begin("DockSpace Demo", &p_open, window_flags);
+        ImGui::PopStyleVar();
+        ImGui::PopStyleVar(2);
+
+        ImGuiIO &io = ImGui::GetIO();
+        if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+        {
+            ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+            ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+        }
+
+        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
+        if (_show_demo_window)
+            ImGui::ShowDemoWindow(&_show_demo_window);
+
+        MainMenuBar();
+
+        ImGui::Begin("Project");
+        {
+            ImGui::Text("Path");
+            ImGui::SameLine();
+            ImGui::InputText("##path_input", _input_buffer, IM_ARRAYSIZE(_input_buffer));
+            ImGui::Text("Is it a directory ? ");
+            ImGui::SameLine();
+
+            if (File::IsDirectory(_input_buffer))
+            {
+                ImGui::TextColored(ImVec4(1.0f, 0.0f, 1.0f, 1.0f), "yes");
+                ImGui::SameLine();
+                ImGui::Checkbox("Include directories", &_include_directories);
+                ImGui::SameLine();
+                ImGui::Checkbox("Absolute paths", &_relative_paths);
+
+                if (ImGui::TreeNode("Grid"))
+                {
+                    _directory_filenames = File::GetDirectoryFileNames(_input_buffer, _include_directories, _relative_paths);
+
+                    for (int i = 0; i < _directory_filenames.size(); i++)
+                    {
+                        ImGui::PushID(i);
+                        if (ImGui::Selectable(_directory_filenames[i].c_str(), true, 0, ImVec2(_directory_filenames[i].length() * 7, 10)))
+                        {
+                            std::cout << _directory_filenames[i] << '\n';
+                        }
+                        ImGui::PopID();
+                    }
+                    ImGui::TreePop();
+                }
+
+                auto pos = ImGui::GetCursorPos();
+                static int selected = 0;
+
+                for (int n = 0; n < 10; n++)
+                {
+                    ImGui::PushID(n);
+
+                    char buf[32];
+                    snprintf(buf, 32, "##Object %d", n);
+
+                    ImGui::SetCursorPos(ImVec2(pos.x, pos.y));
+                    if (ImGui::Selectable(buf, n == selected, 0, ImVec2(-FLT_MIN, 50)))
+                    {
+                        selected = n;
+                    }
+                    ImGui::SetItemAllowOverlap();
+
+                    ImGui::SetCursorPos(ImVec2(pos.x, pos.y));
+                    ImGui::Text("foo");
+
+                    ImGui::SetCursorPos(ImVec2(pos.x + 30, pos.y + 5));
+                    if (ImGui::Button("do thing", ImVec2(70, 30)))
+                    {
+                        ImGui::OpenPopup("Setup?");
+                        selected = n;
+                        printf("SETUP CLICKED %d\n", n);
+                    }
+
+                    if (ImGui::BeginPopupModal("Setup?", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+                    {
+
+                        ImGui::Text("Setup Popup");
+                        if (ImGui::Button("OK", ImVec2(120, 0)))
+                        {
+                            printf("OK PRESSED!\n");
+                            ImGui::CloseCurrentPopup();
+                        }
+                        ImGui::EndPopup();
+                    }
+
+                    ImGui::SetCursorPos(ImVec2(pos.x, pos.y + 20));
+                    ImGui::Text("bar");
+
+                    pos.y += 55;
+
+                    ImGui::PopID();
+                }
+            }
+            else
+            {
+                ImGui::TextColored(ImVec4(1.0f, 0.0f, 1.0f, 1.0f), "no");
+            }
+        }
+        ImGui::End();
+
+        ImGui::End();
+
+        // Rendering
+        ImGui::Render();
+        int display_w, display_h;
+        glfwGetFramebufferSize(_window, &display_w, &display_h);
+        glViewport(0, 0, display_w, display_h);
+        glClearColor(_clear_color.x * _clear_color.w, _clear_color.y * _clear_color.w, _clear_color.z * _clear_color.w, _clear_color.w);
+        glClear(GL_COLOR_BUFFER_BIT);
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+        {
+            GLFWwindow *backup_current_context = glfwGetCurrentContext();
+            ImGui::UpdatePlatformWindows();
+            ImGui::RenderPlatformWindowsDefault();
+            glfwMakeContextCurrent(backup_current_context);
+        }
+
+        glfwSwapBuffers(_window);
+    }
+
     void Window::MainMenuBar()
     {
         if (ImGui::BeginMenuBar())
@@ -223,5 +389,4 @@ namespace se
         glfwDestroyWindow(_window);
         glfwTerminate();
     }
-
 }
