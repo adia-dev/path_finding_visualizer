@@ -1,6 +1,12 @@
 # Created by https://www.toptal.com/developers/gitignore/api/opencv,c++,c,visualstudiocode,visualstudio
 # Edit at https://www.toptal.com/developers/gitignore?templates=opencv,c++,c,visualstudiocode,visualstudio
 
+### CMakelists build ###
+build/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+
 ### C ###
 # Prerequisites
 *.d
