@@ -271,8 +271,6 @@ namespace se
             ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
         }
 
-        _grid->Render();
-
         // 1. Show the big demo window (Most of the sample code is in
         // ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear
         // ImGui!).
@@ -280,6 +278,8 @@ namespace se
             ImGui::ShowDemoWindow(&_show_demo_window);
 
         MainMenuBar();
+
+        _grid->Render();
 
         ImGui::End();
 

@@ -65,49 +65,44 @@ namespace se
 
     void Grid::Render()
     {
-        ImGui::Begin("Grid");
-        // Display all glyphs of the fonts in separate pages of 256 characters
+        ImGui::Begin("Viewport");
         // Set next element is open by default
         ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-        if (ImGui::TreeNode("Glyphs", "Glyphs (%d)", _cell_size))
+
+        ImDrawList *draw_list = ImGui::GetWindowDrawList();
+        const float cell_spacing = ImGui::GetStyle().ItemSpacing.y;
+
+        ImVec2 base_pos = ImGui::GetCursorScreenPos();
+        size_t size = _cells.size();
+
+        for (uint16_t i = 0; i < _height; i++)
         {
-            ImDrawList *draw_list = ImGui::GetWindowDrawList();
-            const float cell_spacing = ImGui::GetStyle().ItemSpacing.y;
-
-            // Draw a 16x16 grid of glyphs
-            ImVec2 base_pos = ImGui::GetCursorScreenPos();
-            size_t size = _cells.size();
-
-            for (uint16_t i = 0; i < _height; i++)
+            for (uint16_t j = 0; j < _width; j++)
             {
-                for (uint16_t j = 0; j < _width; j++)
+
+                ImVec2 cell_p1(base_pos.x + j * (_cell_size + _cell_spacing), base_pos.y + i * (_cell_size + _cell_spacing));
+                ImVec2 cell_p2(cell_p1.x + _cell_size, cell_p1.y + _cell_size);
+
+                // Draw cell
+                draw_list->AddRectFilled(cell_p1, cell_p2, _cells[i][j].GetColor());
+
+                if (ImGui::IsMouseHoveringRect(cell_p1, cell_p2))
                 {
-                    ImVec2 cell_p1(base_pos.x + j * (_cell_size + _cell_spacing), base_pos.y + i * (_cell_size + _cell_spacing));
-                    ImVec2 cell_p2(cell_p1.x + _cell_size, cell_p1.y + _cell_size);
 
-                    // Draw cell
-
-                    draw_list->AddRectFilled(cell_p1, cell_p2, _cells[i][j].GetColor());
-
-                    if (ImGui::IsMouseHoveringRect(cell_p1, cell_p2))
+                    if (ImGui::IsMouseClicked(0))
                     {
-
-                        if (ImGui::IsMouseClicked(0))
-                        {
-                            _cells[i][j].state = (_cells[i][j].state == CellState::Unvisited) ? CellState::Visited : CellState::Unvisited;
-                        }
-                        else if (ImGui::IsMouseClicked(1))
-                        {
-                            _cells[i][j].state = CellState::Obstacle;
-                        }
+                        _cells[i][j].state = (_cells[i][j].state == CellState::Unvisited) ? CellState::Visited : CellState::Unvisited;
+                    }
+                    else if (ImGui::IsMouseClicked(1))
+                    {
+                        _cells[i][j].state = CellState::Obstacle;
                     }
                 }
             }
-
-            ImGui::Dummy(ImVec2((_cell_size + cell_spacing) * _width, (_cell_size + cell_spacing) * _width));
-
-            ImGui::TreePop();
         }
+
+        ImGui::Dummy(ImVec2((float)(_width * (_cell_size + _cell_spacing)), (float)(_height * (_cell_size + _cell_spacing))));
+
         ImGui::End();
     }
 
