@@ -62,7 +62,7 @@ namespace se
 
         /* Grid Data */
         std::unique_ptr<Grid> _grid;
-        uint16_t _steps_per_frame = 25;
+        uint16_t _steps_per_frame = 100;
         uint16_t _cell_size = 20;
         bool _is_running = false;
 

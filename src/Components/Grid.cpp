@@ -164,7 +164,7 @@ namespace se
                     }
                 }
 
-                draw_list->AddRectFilled(cell_p1, cell_p2, cellColor, current_cell->roundness);
+                draw_list->AddRect(cell_p1, cell_p2, cellColor, current_cell->roundness);
             }
         }
 
@@ -204,6 +204,8 @@ namespace se
         if (current.x + 1 < _width)
         {
             Cell *next = &_cells[current.y][current.x + 1];
+            if (next->state == CellState::Unvisited)
+                next->state = CellState::Near;
 
             _queue.push(next->coords);
         }
@@ -211,6 +213,8 @@ namespace se
         if (current.x - 1 >= 0)
         {
             Cell *next = &_cells[current.y][current.x - 1];
+            if (next->state == CellState::Unvisited)
+                next->state = CellState::Near;
 
             _queue.push(next->coords);
         }
@@ -218,6 +222,8 @@ namespace se
         if (current.y + 1 < _height)
         {
             Cell *next = &_cells[current.y + 1][current.x];
+            if (next->state == CellState::Unvisited)
+                next->state = CellState::Near;
 
             _queue.push(next->coords);
         }
@@ -225,6 +231,8 @@ namespace se
         if (current.y - 1 >= 0)
         {
             Cell *next = &_cells[current.y - 1][current.x];
+            if (next->state == CellState::Unvisited)
+                next->state = CellState::Near;
 
             _queue.push(next->coords);
         }

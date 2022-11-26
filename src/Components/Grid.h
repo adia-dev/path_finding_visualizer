@@ -50,15 +50,15 @@ namespace se
             case CellState::Visited:
                 return IM_COL32(100, 50, 217, 200);
             case CellState::Near:
-                return IM_COL32(0, 255, 0, 255);
+                return IM_COL32(200, 50, 217, 150);
             case CellState::Obstacle:
-                return IM_COL32(255, 0, 0, 255);
+                return IM_COL32(0, 0, 255, 255);
             case CellState::Hole:
                 return IM_COL32(0, 0, 255, 255);
             case CellState::Start:
                 return IM_COL32(255, 255, 0, 255);
             case CellState::End:
-                return IM_COL32(255, 0, 255, 255);
+                return IM_COL32(255, 0, 0, 255);
             case CellState::None:
             case CellState::Count:
             default:
