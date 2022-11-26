@@ -189,10 +189,14 @@ namespace se
         {
             is_running = false;
             std::cout << "Found the end!" << std::endl;
+            ClearQueue();
             return;
         }
 
         _visited[current.y][current.x] = true;
+
+        if (_cells[current.y][current.x].state == CellState::Obstacle)
+            return;
 
         if (_cells[current.y][current.x].state != CellState::Start || _cells[current.y][current.x].state != CellState::End)
             _cells[current.y][current.x].state = CellState::Visited;
