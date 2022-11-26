@@ -9,9 +9,6 @@ namespace se
         SetupImGui();
         SetupGrid();
 
-        _working_dir = File::GetWorkingDirectory().c_str();
-        strncpy(_input_buffer, _working_dir.c_str(), _working_dir.length());
-
         Logger::Logln("Window created", Colors::Green);
     }
 
@@ -92,39 +89,11 @@ namespace se
 
         // free the _glsl_version string
         _glsl_version.clear();
-
-        // Load Fonts
-        // - If no fonts are loaded, dear imgui will use the default font. You can
-        // also load multiple fonts and use ImGui::PushFont()/PopFont() to select
-        // them.
-        // - AddFontFromFileTTF() will return the ImFont* so you can store it if you
-        // need to select the font among multiple.
-        // - If the file cannot be loaded, the function will return NULL. Please
-        // handle those errors in your application (e.g. use an assertion, or display
-        // an error and quit).
-        // - The fonts will be rasterized at a given size (w/ oversampling) and stored
-        // into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which
-        // ImGui_ImplXXXX_NewFrame below will call.
-        // - Use '#define IMGUI_ENABLE_FREETYPE' in your imconfig file to use Freetype
-        // for higher quality font rendering.
-        // - Read 'docs/FONTS.md' for more instructions and details.
-        // - Remember that in C/C++ if you want to include a backslash \ in a string
-        // literal you need to write a double backslash \\ !
-        // io.Fonts->AddFontDefault();
-        // io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\segoeui.ttf", 18.0f);
-        // io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
-        // io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
-        // io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
-        // ImFont* font =
-        // io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f,
-        // NULL, io.Fonts->GetGlyphRangesJapanese()); IM_ASSERT(font != NULL);
     }
 
     void Window::SetupGrid()
     {
-        // Setup grid
-        int cell_size = 20;
-        _grid = std::make_unique<Grid>(50, 50, cell_size, 1);
+        _grid = std::make_unique<Grid>(50, 50, _cell_size, 1);
     }
 
     void Window::Play()
@@ -139,10 +108,7 @@ namespace se
     {
         while (!glfwWindowShouldClose(_window))
         {
-            for (int i = 0; i < _steps_per_frame; i++)
-            {
-                _grid->Update();
-            }
+            UpdatePlayground();
             RenderPlayground();
         }
     }
@@ -225,17 +191,21 @@ namespace se
         glfwSwapBuffers(_window);
     }
 
+    void Window::UpdatePlayground()
+    {
+
+        if (ImGui::IsKeyPressed(ImGuiKey_Space))
+            _is_running = !_is_running;
+
+        for (int i = 0; i < _steps_per_frame; i++)
+        {
+            _grid->Update(_is_running);
+        }
+    }
+
     void Window::RenderPlayground()
     {
-        // Poll and handle events (inputs, window resize, etc.)
-        // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell
-        // if dear imgui wants to use your inputs.
-        // - When io.WantCaptureMouse is true, do not dispatch mouse input data to
-        // your main application, or clear/overwrite your copy of the mouse data.
-        // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data
-        // to your main application, or clear/overwrite your copy of the keyboard
-        // data. Generally you may always pass all inputs to dear imgui, and hide them
-        // from your application based on those two flags.
+
         glfwPollEvents();
 
         // Start the Dear ImGui frame
@@ -272,9 +242,6 @@ namespace se
             ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
         }
 
-        // 1. Show the big demo window (Most of the sample code is in
-        // ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear
-        // ImGui!).
         if (_show_demo_window)
             ImGui::ShowDemoWindow(&_show_demo_window);
 
@@ -284,7 +251,7 @@ namespace se
 
         ImGui::End();
 
-        // Rendering
+        // Rendering, this can be split up to multiple function later maybe
         ImGui::Render();
         int display_w, display_h;
         glfwGetFramebufferSize(_window, &display_w, &display_h);
@@ -318,6 +285,7 @@ namespace se
                 ImGui::MenuItem("Padding");
                 ImGui::EndMenu();
             }
+            // TODO: Add my credits to the applications, name date etc... and sources where I learned how to implement the algorithms
             HelpMarker(
                 "When docking is enabled, you can ALWAYS dock MOST window into "
                 "another! Try it now!"

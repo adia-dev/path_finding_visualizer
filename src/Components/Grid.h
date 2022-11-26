@@ -44,7 +44,6 @@ namespace se
         ImU32 GetColor() const
         {
             switch (this->state)
-
             {
             case CellState::Unvisited:
                 return IM_COL32(255, 255, 255, 100);
@@ -99,9 +98,12 @@ namespace se
         void SetCellCount(uint16_t cell_count) { this->_cell_count = cell_count; }
         void SetCells(const std::vector<std::vector<Cell>> &cells) { this->_cells = cells; }
 
-        // Methods
+        // Loop Methods
         void Render();
-        void Update();
+        void Update(bool &is_running);
+
+        // Mostly for public usage
+        bool ResizeGrid(u_int16_t width, u_int16_t height);
 
     private:
         std::vector<std::vector<Cell>> _cells;
@@ -110,12 +112,18 @@ namespace se
 
         uint16_t _width = 0;
         uint16_t _height = 0;
-        bool _is_running = false;
         int _cell_size = 0;
         int _cell_count = 0;
         int _cell_spacing = 1;
-        std::unique_ptr<Cell> _start;
-        std::unique_ptr<Cell> _end;
+        Cell *_start = nullptr;
+        Cell *_end = nullptr;
+
+        // Private Methods
+        void InitCells();
+        bool InitStartCell(u_int16_t x, u_int16_t y);
+        bool InitEndCell(u_int16_t x, u_int16_t y);
+        void ResetCells();
+        void ClearQueue();
     };
 
 }

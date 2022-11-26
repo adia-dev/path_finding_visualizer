@@ -29,8 +29,6 @@ namespace se
 
         void Play();
         void Playground();
-        void Render();
-        void RenderPlayground();
 
         static Window &Get()
         {
@@ -57,20 +55,16 @@ namespace se
         std::string _glsl_version = "#version 330";
         const u_int16_t _width = 1280;
         const u_int16_t _height = 720;
-        /* Playgound Data */
-        std::string _working_dir;
-        char _input_buffer[256];
-        std::vector<std::string> _directory_filenames;
-        bool _include_directories = false;
-        bool _relative_paths = false;
 
         bool _show_demo_window = true;
         const char *_window_title = "Hello, world!";
         ImVec4 _clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
-        /* Play Data */
+        /* Grid Data */
         std::unique_ptr<Grid> _grid;
-        uint16_t _steps_per_frame = 15;
+        uint16_t _steps_per_frame = 25;
+        uint16_t _cell_size = 20;
+        bool _is_running = false;
 
         static inline void glfw_error_callback(int error, const char *description)
         {
@@ -81,9 +75,16 @@ namespace se
         void SetupOpenGL();
         void SetupGrid();
 
-        // UI Elements to be rendered
-        void MainMenuBar();
+        // void Update();
+        void Render();
 
+        // Playground Methods
+        void UpdatePlayground();
+        void RenderPlayground();
+
+        // Common Methods
+        void MainMenuBar();
+        // void HandleEvents();
         void Cleanup();
     };
 

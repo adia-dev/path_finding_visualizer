@@ -4,67 +4,115 @@
 namespace se
 {
     Grid::Grid()
-        : _width(0), _height(0), _cell_size(0), _cell_count(0)
+        : _width(0), _height(0), _cell_size(0), _cell_count(0), _start(nullptr), _end(nullptr)
     {
-        this->_cells = std::vector<std::vector<Cell>>();
+        // Do nothing for now
     }
 
     Grid::Grid(uint16_t width, uint16_t height)
         : _width(width), _height(height), _cell_size(0), _cell_count(0)
     {
-        this->_cells = std::vector<std::vector<Cell>>(this->_height, std::vector<Cell>(this->_width));
-
-        // initialize the grid
-        for (uint16_t i = 0; i < this->_height; i++)
-        {
-            for (uint16_t j = 0; j < this->_width; j++)
-            {
-                this->_cells[i][j] = Cell(CellState::Unvisited, ImVec2(j, i));
-            }
-        }
+        InitCells();
+        InitStartCell(0, 0);
+        InitEndCell(_width - 1, _height - 1);
     }
 
     Grid::Grid(uint16_t width, uint16_t height, uint16_t cell_size)
         : _width(width), _height(height), _cell_size(cell_size), _cell_count(0)
     {
-        this->_cells = std::vector<std::vector<Cell>>(this->_height, std::vector<Cell>(this->_width));
-
-        // initialize the grid
-        for (uint16_t i = 0; i < this->_height; i++)
-        {
-            for (uint16_t j = 0; j < this->_width; j++)
-            {
-                this->_cells[i][j] = Cell(CellState::Unvisited, ImVec2(j, i));
-            }
-        }
+        InitCells();
+        InitStartCell(0, 0);
+        InitEndCell(_width - 1, _height - 1);
     }
 
     Grid::Grid(uint16_t width, uint16_t height, uint16_t cell_size, uint16_t cell_spacing)
         : _width(width), _height(height), _cell_size(cell_size), _cell_spacing(cell_spacing)
     {
 
-        // initialize the grid
+        InitCells();
+        InitStartCell(0, 0);
+        InitEndCell(_width - 1, _height - 1);
+    }
 
-        this->_cells = std::vector<std::vector<Cell>>(this->_height, std::vector<Cell>(this->_width));
-        this->_visited = std::vector<std::vector<bool>>(this->_height, std::vector<bool>(this->_width, false));
+    Grid::~Grid()
+    {
+    }
 
-        // initialize the grid
+    void Grid::InitCells()
+    {
+        if (_cells.size() != _height || (_cells.size() > 0 && _cells[0].size() != _width))
+        {
+            this->_cells = std::vector<std::vector<Cell>>(this->_height, std::vector<Cell>(this->_width));
+            this->_visited = std::vector<std::vector<bool>>(this->_height, std::vector<bool>(this->_width, false));
+        }
+
+        ResetCells();
+
+        _queue.push(ImVec2(0, 0));
+    }
+
+    bool Grid::InitStartCell(u_int16_t x, u_int16_t y)
+    {
+        if (x < 0 || x >= _width || y < 0 || y >= _height)
+        {
+            Logger::Logln("Could not set the start cell to \n\tx: " + std::to_string(x) + "\n\ty: " + std::to_string(y), Colors::Red);
+            return false;
+        }
+
+        _start = &_cells[y][x];
+        _start->state = CellState::Start;
+
+        _queue.push(ImVec2(x, y));
+
+        return true;
+    }
+
+    bool Grid::InitEndCell(u_int16_t x, u_int16_t y)
+    {
+        if (x < 0 || x >= _width || y < 0 || y >= _height)
+        {
+            Logger::Logln("Could not set the end cell to \n\tx: " + std::to_string(x) + "\n\ty: " + std::to_string(y), Colors::Red);
+            return false;
+        }
+
+        _end = &_cells[y][x];
+        _end->state = CellState::End;
+
+        return true;
+    }
+
+    void Grid::ResetCells()
+    {
         for (uint16_t i = 0; i < this->_height; i++)
         {
             for (uint16_t j = 0; j < this->_width; j++)
             {
                 this->_cells[i][j] = Cell(CellState::Unvisited, ImVec2(j, i));
+                this->_visited[i][j] = false;
             }
         }
-
-        _queue.push(ImVec2(0, 0));
-        _end = std::make_unique<Cell>(_cells[_height - 1][_width - 1]);
-        _end->state = CellState::End;
-        _start = std::make_unique<Cell>(_cells[0][0]);
     }
 
-    Grid::~Grid()
+    void Grid::ClearQueue()
     {
+        while (!_queue.empty())
+            _queue.pop();
+    }
+
+    bool Grid::ResizeGrid(u_int16_t width, u_int16_t height)
+    {
+        if (width < 0 || height < 0)
+            return false;
+
+        this->_width = width;
+        this->_height = height;
+
+        this->_cells.resize(height, std::vector<Cell>(width));
+        this->_visited.resize(height, std::vector<bool>(width, false));
+
+        ResetCells();
+
+        return true;
     }
 
     void Grid::Render()
@@ -75,8 +123,6 @@ namespace se
         ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 
         ImDrawList *draw_list = ImGui::GetWindowDrawList();
-        const float cell_spacing = ImGui::GetStyle().ItemSpacing.y;
-
         ImVec2 base_pos = ImGui::GetCursorScreenPos();
         size_t size = _cells.size();
 
@@ -90,29 +136,11 @@ namespace se
 
                 Cell *current_cell = &_cells[i][j];
 
-                if (current_cell->state == CellState::End)
-                {
-                    _is_running = false;
-                    std::cout << "Found the end!" << std::endl;
-                }
-
-                // Draw cell
                 ImU32 cellColor = current_cell->GetColor();
-
-                // lerp the roundness of the corners based on the cell state to 0
-                // if (current_cell->state == CellState::Visited)
-                // current_cell->roundness = Maths::lerp(current_cell->roundness, 7.5f, 0.01f);
 
                 if (ImGui::IsMouseHoveringRect(cell_p1, cell_p2))
                 {
-                    cellColor = IM_COL32(255, 255, 255, 250);
-
-                    // if hovered lerp the roundness of the cell to 2.0f
-
-                    if (ImGui::IsMouseClicked(0))
-                    {
-                        current_cell->state = (current_cell->state == CellState::Unvisited) ? CellState::Visited : CellState::Unvisited;
-                    }
+                    cellColor = IM_COL32(255, 255, 255, 210);
 
                     if (ImGui::IsKeyPressed(ImGuiKey_LeftShift))
                     {
@@ -123,44 +151,20 @@ namespace se
                     {
                         if (_end != nullptr)
                             _end->state = CellState::Unvisited;
-                        _end = std::make_unique<Cell>(_cells[i][j]);
-                        _end->state = CellState::End;
-                        std::cout << "End: " << _end->coords.x << ", " << _end->coords.y << std::endl;
+
+                        InitEndCell(j, i);
                     }
 
                     if (ImGui::IsKeyPressed(ImGuiKey_S))
                     {
-                        // clear the queue
-                        while (!_queue.empty())
-                            _queue.pop();
+                        ResetCells();
+                        ClearQueue();
 
-                        // reset the state of all the cells
-                        for (uint16_t i = 0; i < _height; i++)
-                        {
-                            for (uint16_t j = 0; j < _width; j++)
-                            {
-                                if (_cells[i][j].state == CellState::Obstacle || _cells[i][j].state == CellState::End || _cells[i][j].state == CellState::Start)
-                                    continue;
-                                _cells[i][j].state = CellState::Unvisited;
-                                _visited[i][j] = false;
-                            }
-                        }
-
-                        _queue.push(ImVec2(j, i));
-                        _start = std::make_unique<Cell>(_cells[i][j]);
-                        _start->state = CellState::Start;
+                        InitStartCell(j, i);
                     }
                 }
 
-                // depending on the distance from the middle of the _cells, adjust the alpha value
-                // this will make the _cells fade out as they get further away from the middle
-                float alpha = Maths::lerp(0.0f, 255.0f, 1.0f - (std::abs((float)_height / 2.0f - (float)i) / (float)_height));
-
-                // cellColor |= ((ImU32)(alpha) << IM_COL32_R_SHIFT);
-
                 draw_list->AddRectFilled(cell_p1, cell_p2, cellColor, current_cell->roundness);
-
-                // draw_list->AddRectFilled(cell_p1, cell_p2, cellColor, current_cell->roundness);
             }
         }
 
@@ -169,38 +173,29 @@ namespace se
         ImGui::End();
     }
 
-    void Grid::Update()
+    void Grid::Update(bool &is_running)
     {
-
-        // // if I press the spacebar, then I want to start the algorithm
-        if (ImGui::IsKeyReleased(ImGuiKey_Space))
-        {
-            this->_is_running = !this->_is_running;
-        }
-
-        if (!_is_running || _queue.empty() || _end->state == CellState::Visited)
+        if (!is_running || _queue.empty() || _end->state == CellState::Visited)
             return;
 
         // BFS
         auto current = _queue.front();
         _queue.pop();
 
-        // check if the current cell is the end cell
-        if (current.x == _end->coords.x && current.y == _end->coords.y || _visited[current.y][current.x])
+        if (_visited[current.y][current.x])
             return;
-
-        _visited[current.y][current.x] = true;
-        if (_cells[current.y][current.x].state != CellState::Start || _cells[current.y][current.x].state != CellState::End)
-            _cells[current.y][current.x].state = CellState::Visited;
 
         if (_cells[current.y][current.x].state == CellState::End)
         {
-            _is_running = false;
+            is_running = false;
             std::cout << "Found the end!" << std::endl;
             return;
         }
 
-        // add the current cell to the visited list
+        _visited[current.y][current.x] = true;
+
+        if (_cells[current.y][current.x].state != CellState::Start || _cells[current.y][current.x].state != CellState::End)
+            _cells[current.y][current.x].state = CellState::Visited;
 
         if (current.x + 1 < _width)
         {
