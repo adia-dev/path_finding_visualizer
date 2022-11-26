@@ -93,7 +93,7 @@ namespace se
 
     void Window::SetupGrid()
     {
-        _grid = std::make_unique<Grid>(50, 50, _cell_size, 1);
+        _grid = std::make_unique<Grid>(46, 31, _cell_size, 1);
     }
 
     void Window::Play()
