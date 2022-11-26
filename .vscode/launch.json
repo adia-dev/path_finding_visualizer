@@ -5,20 +5,17 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Play",
+      "name": "(lldb) Lancer",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/bin/app",
+      "program": "${workspaceFolder}/build/app",
       "args": [],
       "stopAtEntry": false,
       "cwd": "${fileDirname}",
       "environment": [],
       "externalConsole": false,
       "MIMode": "lldb",
-      "preLaunchTask": "Makefile: build",
-      "logging": {
-        "moduleLoad": false
-      }
+      "preLaunchTask": "CMake: build"
     }
   ]
 }
