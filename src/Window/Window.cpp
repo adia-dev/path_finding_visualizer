@@ -7,6 +7,7 @@ namespace se
     {
         SetupOpenGL();
         SetupImGui();
+        SetupGrid();
 
         _working_dir = File::GetWorkingDirectory().c_str();
         strncpy(_input_buffer, _working_dir.c_str(), _working_dir.length());
@@ -14,10 +15,7 @@ namespace se
         Logger::Logln("Window created", Colors::Green);
     }
 
-    Window::~Window()
-    {
-        Cleanup();
-    }
+    Window::~Window() { Cleanup(); }
 
     void Window::SetupOpenGL()
     {
@@ -45,8 +43,8 @@ namespace se
         _glsl_version = "#version 130";
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-        // glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
-        // glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // 3.0+ only
+        // glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+
+        // only glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // 3.0+ only
 #endif
 
         // Create window with graphics context
@@ -64,18 +62,23 @@ namespace se
         ImGui::CreateContext();
         ImGuiIO &io = ImGui::GetIO();
         (void)io;
-        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-        // io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+        io.ConfigFlags |=
+            ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+        // io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad
+        // Controls
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;   // Enable Docking
-        io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable; // Enable Multi-Viewport / Platform Windows
-        // io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-        // io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+        io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable; // Enable Multi-Viewport /
+        // Platform Windows
+        // io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable
+        // Keyboard Controls io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; //
+        // Enable Gamepad Controls
 
         // Setup Dear ImGui style
         ImGui::StyleColorsDark();
         // ImGui::StyleColorsLight();
 
-        // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
+        // When viewports are enabled we tweak WindowRounding/WindowBg so platform
+        // windows can look identical to regular ones.
         ImGuiStyle &style = ImGui::GetStyle();
         if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
         {
@@ -91,20 +94,36 @@ namespace se
         _glsl_version.clear();
 
         // Load Fonts
-        // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
-        // - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
-        // - If the file cannot be loaded, the function will return NULL. Please handle those errors in your application (e.g. use an assertion, or display an error and quit).
-        // - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
-        // - Use '#define IMGUI_ENABLE_FREETYPE' in your imconfig file to use Freetype for higher quality font rendering.
+        // - If no fonts are loaded, dear imgui will use the default font. You can
+        // also load multiple fonts and use ImGui::PushFont()/PopFont() to select
+        // them.
+        // - AddFontFromFileTTF() will return the ImFont* so you can store it if you
+        // need to select the font among multiple.
+        // - If the file cannot be loaded, the function will return NULL. Please
+        // handle those errors in your application (e.g. use an assertion, or display
+        // an error and quit).
+        // - The fonts will be rasterized at a given size (w/ oversampling) and stored
+        // into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which
+        // ImGui_ImplXXXX_NewFrame below will call.
+        // - Use '#define IMGUI_ENABLE_FREETYPE' in your imconfig file to use Freetype
+        // for higher quality font rendering.
         // - Read 'docs/FONTS.md' for more instructions and details.
-        // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
+        // - Remember that in C/C++ if you want to include a backslash \ in a string
+        // literal you need to write a double backslash \\ !
         // io.Fonts->AddFontDefault();
         // io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\segoeui.ttf", 18.0f);
         // io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
         // io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
         // io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
-        // ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
-        // IM_ASSERT(font != NULL);
+        // ImFont* font =
+        // io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f,
+        // NULL, io.Fonts->GetGlyphRangesJapanese()); IM_ASSERT(font != NULL);
+    }
+
+    void Window::SetupGrid()
+    {
+        // Setup grid
+        _grid = std::make_unique<Grid>(25, 25, 16, 2);
     }
 
     void Window::Play()
@@ -119,6 +138,10 @@ namespace se
     {
         while (!glfwWindowShouldClose(_window))
         {
+            for (int i = 0; i < _steps_per_frame; i++)
+            {
+                _grid->Update();
+            }
             RenderPlayground();
         }
     }
@@ -126,10 +149,14 @@ namespace se
     void Window::Render()
     {
         // Poll and handle events (inputs, window resize, etc.)
-        // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
-        // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
-        // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
-        // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
+        // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell
+        // if dear imgui wants to use your inputs.
+        // - When io.WantCaptureMouse is true, do not dispatch mouse input data to
+        // your main application, or clear/overwrite your copy of the mouse data.
+        // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data
+        // to your main application, or clear/overwrite your copy of the keyboard
+        // data. Generally you may always pass all inputs to dear imgui, and hide them
+        // from your application based on those two flags.
         glfwPollEvents();
 
         // Start the Dear ImGui frame
@@ -138,7 +165,8 @@ namespace se
         ImGui::NewFrame();
 
         static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
-        ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+        ImGuiWindowFlags window_flags =
+            ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
 
         const ImGuiViewport *viewport = ImGui::GetMainViewport();
         ImGui::SetNextWindowPos(viewport->WorkPos);
@@ -146,8 +174,10 @@ namespace se
         ImGui::SetNextWindowViewport(viewport->ID);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-        window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-        window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+        window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
+                        ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+        window_flags |=
+            ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 
@@ -163,7 +193,9 @@ namespace se
             ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
         }
 
-        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
+        // 1. Show the big demo window (Most of the sample code is in
+        // ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear
+        // ImGui!).
         if (_show_demo_window)
             ImGui::ShowDemoWindow(&_show_demo_window);
 
@@ -176,7 +208,8 @@ namespace se
         int display_w, display_h;
         glfwGetFramebufferSize(_window, &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
-        glClearColor(_clear_color.x * _clear_color.w, _clear_color.y * _clear_color.w, _clear_color.z * _clear_color.w, _clear_color.w);
+        glClearColor(_clear_color.x * _clear_color.w, _clear_color.y * _clear_color.w,
+                     _clear_color.z * _clear_color.w, _clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
@@ -194,10 +227,14 @@ namespace se
     void Window::RenderPlayground()
     {
         // Poll and handle events (inputs, window resize, etc.)
-        // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
-        // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
-        // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
-        // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
+        // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell
+        // if dear imgui wants to use your inputs.
+        // - When io.WantCaptureMouse is true, do not dispatch mouse input data to
+        // your main application, or clear/overwrite your copy of the mouse data.
+        // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data
+        // to your main application, or clear/overwrite your copy of the keyboard
+        // data. Generally you may always pass all inputs to dear imgui, and hide them
+        // from your application based on those two flags.
         glfwPollEvents();
 
         // Start the Dear ImGui frame
@@ -206,7 +243,8 @@ namespace se
         ImGui::NewFrame();
 
         static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
-        ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+        ImGuiWindowFlags window_flags =
+            ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
 
         const ImGuiViewport *viewport = ImGui::GetMainViewport();
         ImGui::SetNextWindowPos(viewport->WorkPos);
@@ -214,13 +252,15 @@ namespace se
         ImGui::SetNextWindowViewport(viewport->ID);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-        window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-        window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+        window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
+                        ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+        window_flags |=
+            ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 
         static bool p_open = true;
-        ImGui::Begin("DockSpace Demo", &p_open, window_flags);
+        ImGui::Begin("Grid", &p_open, window_flags);
         ImGui::PopStyleVar();
         ImGui::PopStyleVar(2);
 
@@ -231,98 +271,15 @@ namespace se
             ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
         }
 
-        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
+        _grid->Render();
+
+        // 1. Show the big demo window (Most of the sample code is in
+        // ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear
+        // ImGui!).
         if (_show_demo_window)
             ImGui::ShowDemoWindow(&_show_demo_window);
 
         MainMenuBar();
-
-        ImGui::Begin("Project");
-        {
-            ImGui::Text("Path");
-            ImGui::SameLine();
-            ImGui::InputText("##path_input", _input_buffer, IM_ARRAYSIZE(_input_buffer));
-            ImGui::Text("Is it a directory ? ");
-            ImGui::SameLine();
-
-            if (File::IsDirectory(_input_buffer))
-            {
-                ImGui::TextColored(ImVec4(1.0f, 0.0f, 1.0f, 1.0f), "yes");
-                ImGui::SameLine();
-                ImGui::Checkbox("Include directories", &_include_directories);
-                ImGui::SameLine();
-                ImGui::Checkbox("Absolute paths", &_relative_paths);
-
-                if (ImGui::TreeNode("Grid"))
-                {
-                    _directory_filenames = File::GetDirectoryFileNames(_input_buffer, _include_directories, _relative_paths);
-
-                    for (int i = 0; i < _directory_filenames.size(); i++)
-                    {
-                        ImGui::PushID(i);
-                        if (ImGui::Selectable(_directory_filenames[i].c_str(), true, 0, ImVec2(_directory_filenames[i].length() * 7, 10)))
-                        {
-                            std::cout << _directory_filenames[i] << '\n';
-                        }
-                        ImGui::PopID();
-                    }
-                    ImGui::TreePop();
-                }
-
-                auto pos = ImGui::GetCursorPos();
-                static int selected = 0;
-
-                for (int n = 0; n < 10; n++)
-                {
-                    ImGui::PushID(n);
-
-                    char buf[32];
-                    snprintf(buf, 32, "##Object %d", n);
-
-                    ImGui::SetCursorPos(ImVec2(pos.x, pos.y));
-                    if (ImGui::Selectable(buf, n == selected, 0, ImVec2(-FLT_MIN, 50)))
-                    {
-                        selected = n;
-                    }
-                    ImGui::SetItemAllowOverlap();
-
-                    ImGui::SetCursorPos(ImVec2(pos.x, pos.y));
-                    ImGui::Text("foo");
-
-                    ImGui::SetCursorPos(ImVec2(pos.x + 30, pos.y + 5));
-                    if (ImGui::Button("do thing", ImVec2(70, 30)))
-                    {
-                        ImGui::OpenPopup("Setup?");
-                        selected = n;
-                        printf("SETUP CLICKED %d\n", n);
-                    }
-
-                    if (ImGui::BeginPopupModal("Setup?", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-                    {
-
-                        ImGui::Text("Setup Popup");
-                        if (ImGui::Button("OK", ImVec2(120, 0)))
-                        {
-                            printf("OK PRESSED!\n");
-                            ImGui::CloseCurrentPopup();
-                        }
-                        ImGui::EndPopup();
-                    }
-
-                    ImGui::SetCursorPos(ImVec2(pos.x, pos.y + 20));
-                    ImGui::Text("bar");
-
-                    pos.y += 55;
-
-                    ImGui::PopID();
-                }
-            }
-            else
-            {
-                ImGui::TextColored(ImVec4(1.0f, 0.0f, 1.0f, 1.0f), "no");
-            }
-        }
-        ImGui::End();
 
         ImGui::End();
 
@@ -331,7 +288,8 @@ namespace se
         int display_w, display_h;
         glfwGetFramebufferSize(_window, &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
-        glClearColor(_clear_color.x * _clear_color.w, _clear_color.y * _clear_color.w, _clear_color.z * _clear_color.w, _clear_color.w);
+        glClearColor(_clear_color.x * _clear_color.w, _clear_color.y * _clear_color.w,
+                     _clear_color.z * _clear_color.w, _clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
@@ -352,26 +310,31 @@ namespace se
         {
             if (ImGui::BeginMenu("Options"))
             {
-                // Disabling fullscreen would allow the window to be moved to the front of other windows,
-                // which we can't undo at the moment without finer window depth/z control.
+                // Disabling fullscreen would allow the window to be moved to the front of
+                // other windows, which we can't undo at the moment without finer window
+                // depth/z control.
                 ImGui::MenuItem("Fullscreen");
                 ImGui::MenuItem("Padding");
                 ImGui::EndMenu();
             }
             HelpMarker(
-                "When docking is enabled, you can ALWAYS dock MOST window into another! Try it now!"
+                "When docking is enabled, you can ALWAYS dock MOST window into "
+                "another! Try it now!"
                 "\n"
                 "- Drag from window title bar or their tab to dock/undock."
                 "\n"
-                "- Drag from window menu button (upper-left button) to undock an entire node (all windows)."
+                "- Drag from window menu button (upper-left button) to undock an "
+                "entire node (all windows)."
                 "\n"
-                "- Hold SHIFT to disable docking (if io.ConfigDockingWithShift == false, default)"
+                "- Hold SHIFT to disable docking (if io.ConfigDockingWithShift == "
+                "false, default)"
                 "\n"
                 "- Hold SHIFT to enable docking (if io.ConfigDockingWithShift == true)"
                 "\n"
                 "This demo app has nothing to do with enabling docking!"
                 "\n\n"
-                "This demo app only demonstrate the use of ImGui::DockSpace() which allows you to manually create a docking node _within_ another window."
+                "This demo app only demonstrate the use of ImGui::DockSpace() which "
+                "allows you to manually create a docking node _within_ another window."
                 "\n\n"
                 "Read comments in ShowExampleAppDockSpace() for more details.");
 
@@ -389,4 +352,4 @@ namespace se
         glfwDestroyWindow(_window);
         glfwTerminate();
     }
-}
+} // namespace se

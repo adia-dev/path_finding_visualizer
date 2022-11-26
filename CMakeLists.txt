@@ -50,14 +50,14 @@ set(LIBRARIES "glfw;OpenGL::GL")
 # echo LIBRARIES
 message(STATUS "LIBRARIES: ${LIBRARIES}")
 
-file(GLOB sources src/*.cpp)
+file(GLOB_RECURSE SRC_FILES ${SRC_DIR}/*.cpp ${SRC_DIR}/*.h)
 
 set(IMGUI_SRC ${IMGUI_DIR}/imgui.cpp ${IMGUI_DIR}/imgui_demo.cpp ${IMGUI_DIR}/imgui_draw.cpp ${IMGUI_DIR}/imgui_tables.cpp ${IMGUI_DIR}/imgui_widgets.cpp)
 set(GLFW_SRC ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp)
 
 add_definitions(-D__DIR__=\"\" -D__LOG__=\"\" -D__LOG_TO_FILE__)
 
-add_executable(${PROJECT_NAME} ${sources} ${IMGUI_SRC} ${GLFW_SRC})
+add_executable(${PROJECT_NAME} ${SRC_FILES} ${IMGUI_SRC} ${GLFW_SRC})
 target_link_libraries(${PROJECT_NAME} ${LIBRARIES})
 
 if(${CMAKE_BUILD_TYPE} STREQUAL "Playground")

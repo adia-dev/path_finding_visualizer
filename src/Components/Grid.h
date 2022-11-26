@@ -6,62 +6,115 @@
 #include "../Utilities/Singleton.h"
 #include "../Core/classes.h"
 
+#define DIRECTIONS                         \
+    {                                      \
+        {0, 1}, {1, 0}, {0, -1}, { -1, 0 } \
+    }
+
 namespace se
 {
-    // Grid
+    enum class CellState
+    {
+        Unvisited,
+        Visited,
+        Near,
+        Obstacle,
+        Hole,
+        Start,
+        End,
+        None,
+        Count
+    };
+
+    struct Cell
+    {
+
+        Cell()
+        {
+            this->state = CellState::Unvisited;
+            this->coords = {0, 0};
+        }
+
+        Cell(CellState state, const ImVec2 &coords)
+        {
+            this->state = state;
+            this->coords = coords;
+        }
+
+        ImU32 GetColor() const
+        {
+            switch (this->state)
+
+            {
+            case CellState::Unvisited:
+                return IM_COL32(255, 255, 255, 100);
+            case CellState::Visited:
+                return IM_COL32(100, 50, 217, 200);
+            case CellState::Near:
+                return IM_COL32(0, 255, 0, 255);
+            case CellState::Obstacle:
+                return IM_COL32(255, 0, 0, 255);
+            case CellState::Hole:
+                return IM_COL32(0, 0, 255, 255);
+            case CellState::Start:
+                return IM_COL32(255, 255, 0, 255);
+            case CellState::End:
+                return IM_COL32(255, 0, 255, 255);
+            case CellState::None:
+            case CellState::Count:
+            default:
+                return IM_COL32(0, 0, 0, 0);
+            }
+
+            return IM_COL32(0, 0, 0, 0);
+        }
+
+        ImVec2 coords;
+        CellState state;
+        bool isActive = true;
+    };
+
     class Grid
     {
     public:
-        template <typename T>
-        static void RenderGrid(Window *window, std::vector<T> &collection, int cell_size = AUTO_GRID_SIZE, int max_elements_per_row = AUTO_GRID_SIZE, bool wrap = true, const std::string &ID = "Grid", const std::string &label = "")
-        {
+        Grid();
+        Grid(uint16_t width, uint16_t height);
+        Grid(uint16_t width, uint16_t height, uint16_t cell_size);
+        Grid(uint16_t width, uint16_t height, uint16_t cell_size, uint16_t cell_spacing);
 
-            // Display all glyphs of the fonts in separate pages of 256 characters
-            if (ImGui::TreeNode("Glyphs", "Glyphs (%d)", cell_size))
-            {
-                ImDrawList *draw_list = ImGui::GetWindowDrawList();
-                const float cell_spacing = ImGui::GetStyle().ItemSpacing.y;
+        ~Grid();
 
-                // Draw a 16x16 grid of glyphs
-                ImVec2 base_pos = ImGui::GetCursorScreenPos();
-                size_t size = collection.size();
-                for (unsigned int n = 0; n < size; n++)
-                {
-                    ImVec2 cell_p1(base_pos.x + (n % max_elements_per_row) * (cell_size + cell_spacing), base_pos.y + (n / max_elements_per_row) * (cell_size + cell_spacing));
-                    ImVec2 cell_p2(cell_p1.x + cell_size, cell_p1.y + cell_size);
-                    draw_list->AddRect(cell_p1, cell_p2, true ? IM_COL32(255, 255, 255, 100) : IM_COL32(255, 255, 255, 50));
+        // Getters
+        uint16_t GetWidth() const { return this->_width; }
+        uint16_t GetHeight() const { return this->_height; }
+        uint16_t GetCellSize() const { return this->_cell_size; }
+        uint16_t GetCellCount() const { return this->_cell_count; }
+        std::vector<std::vector<Cell>> GetCells() const { return this->_cells; }
 
-                    if (ImGui::IsMouseHoveringRect(cell_p1, cell_p2))
-                    {
-                        ImGui::BeginTooltip();
-                        // ImGui text of the coordinates of the cell
-                        ImGui::Text("Coords: (%d, %d)", (int)(cell_p1.x - base_pos.x) / (int)(cell_size + cell_spacing), (int)(cell_p1.y - base_pos.y) / (int)(cell_size + cell_spacing));
-                        ImGui::EndTooltip();
+        // Setters
+        void SetWidth(uint16_t width) { this->_width = width; }
+        void SetHeight(uint16_t height) { this->_height = height; }
+        void SetCellSize(uint16_t cell_size) { this->_cell_size = cell_size; }
+        void SetCellCount(uint16_t cell_count) { this->_cell_count = cell_count; }
+        void SetCells(const std::vector<std::vector<Cell>> &cells) { this->_cells = cells; }
 
-                        if (ImGui::IsMouseClicked(0))
-                        {
-                            // invert the boolean value of the cell when clicked
-                            collection[n] = !collection[n];
-                        }
-                    }
-
-                    if (collection[n])
-                    {
-                        // draw the glyph in the cell
-                        draw_list->AddRectFilled(cell_p1, cell_p2, IM_COL32(255, 255, 255, 50));
-                    }
-                    else
-                    {
-                        draw_list->AddRectFilled(cell_p1, cell_p2, IM_COL32(255, 255, 255, 255));
-                    }
-                }
-                ImGui::Dummy(ImVec2((cell_size + cell_spacing) * max_elements_per_row, (cell_size + cell_spacing) * max_elements_per_row));
-
-                ImGui::TreePop();
-            }
-        }
+        // Methods
+        void Render();
+        void Update();
 
     private:
+        std::vector<std::vector<Cell>> _cells;
+        std::queue<ImVec2> _queue;
+        std::vector<ImVec2> _path;
+        std::vector<std::vector<bool>> _visited;
+        std::vector<ImVec2> _holes;
+        uint16_t _width = 0;
+        uint16_t _height = 0;
+        int _cell_size = 0;
+        int _cell_count = 0;
+        int _cell_spacing = 0;
+        std::unique_ptr<Cell> _start;
+        std::unique_ptr<Cell> _end;
     };
 
 }

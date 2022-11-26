@@ -3,20 +3,7 @@
 // If you are new to Dear ImGui, read documentation from the docs/ folder + read the top of imgui.cpp.
 // Read online: https://github.com/ocornut/imgui/tree/master/docs
 
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
-#include <stdio.h>
-#include <string>
-#include <iostream>
-#define GL_SILENCE_DEPRECATION
-#if defined(IMGUI_IMPL_OPENGL_ES2)
-#include <GLES2/gl2.h>
-#endif
-#include <GLFW/glfw3.h> // Will drag system OpenGL headers
-
-/* PROJECT INCLUDES */
-#include "Utilities/Singleton.h"
+#include "../Components/Grid.h"
 
 // [Win32] Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
 // To link with VS2010-era libraries, VS2015+ requires linking with legacy_stdio_definitions.lib, which we do using this pragma.
@@ -79,6 +66,10 @@ namespace se
         const char *_window_title = "Hello, world!";
         ImVec4 _clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
+        /* Play Data */
+        std::unique_ptr<Grid> _grid;
+        uint16_t _steps_per_frame = 100;
+
         static inline void glfw_error_callback(int error, const char *description)
         {
             fprintf(stderr, "Glfw Error %d: %s\n", error, description);
@@ -86,6 +77,7 @@ namespace se
 
         void SetupImGui();
         void SetupOpenGL();
+        void SetupGrid();
 
         // UI Elements to be rendered
         void MainMenuBar();
