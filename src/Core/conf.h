@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <queue>
+#include <cmath>
 #include <iostream>
 #define GL_SILENCE_DEPRECATION
 #if defined(IMGUI_IMPL_OPENGL_ES2)

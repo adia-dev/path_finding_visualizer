@@ -55,6 +55,8 @@ namespace se
         /* data */
         GLFWwindow *_window = nullptr;
         std::string _glsl_version = "#version 330";
+        const u_int16_t _width = 1280;
+        const u_int16_t _height = 720;
         /* Playgound Data */
         std::string _working_dir;
         char _input_buffer[256];
@@ -68,7 +70,7 @@ namespace se
 
         /* Play Data */
         std::unique_ptr<Grid> _grid;
-        uint16_t _steps_per_frame = 100;
+        uint16_t _steps_per_frame = 15;
 
         static inline void glfw_error_callback(int error, const char *description)
         {

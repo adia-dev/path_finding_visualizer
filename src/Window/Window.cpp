@@ -48,7 +48,7 @@ namespace se
 #endif
 
         // Create window with graphics context
-        _window = glfwCreateWindow(1280, 720, _window_title, NULL, NULL);
+        _window = glfwCreateWindow(_width, _height, _window_title, NULL, NULL);
         if (_window == NULL)
             std::__throw_runtime_error("Failed to create GLFW window");
         glfwMakeContextCurrent(_window);
@@ -123,7 +123,8 @@ namespace se
     void Window::SetupGrid()
     {
         // Setup grid
-        _grid = std::make_unique<Grid>(25, 25, 16, 2);
+        int cell_size = 20;
+        _grid = std::make_unique<Grid>(50, 50, cell_size, 1);
     }
 
     void Window::Play()

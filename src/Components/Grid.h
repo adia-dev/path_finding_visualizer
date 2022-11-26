@@ -72,6 +72,7 @@ namespace se
         ImVec2 coords;
         CellState state;
         bool isActive = true;
+        float roundness = 0.0f;
     };
 
     class Grid
@@ -104,15 +105,15 @@ namespace se
 
     private:
         std::vector<std::vector<Cell>> _cells;
-        std::queue<ImVec2> _queue;
-        std::vector<ImVec2> _path;
         std::vector<std::vector<bool>> _visited;
-        std::vector<ImVec2> _holes;
+        std::queue<ImVec2> _queue;
+
         uint16_t _width = 0;
         uint16_t _height = 0;
+        bool _is_running = false;
         int _cell_size = 0;
         int _cell_count = 0;
-        int _cell_spacing = 0;
+        int _cell_spacing = 1;
         std::unique_ptr<Cell> _start;
         std::unique_ptr<Cell> _end;
     };
