@@ -50,7 +50,7 @@ namespace se
             case CellState::Visited:
                 return IM_COL32(100, 50, 217, 200);
             case CellState::Near:
-                return IM_COL32(200, 50, 217, 150);
+                return IM_COL32(100, 175, 50, 170);
             case CellState::Obstacle:
                 return IM_COL32(0, 0, 255, 255);
             case CellState::Hole:
@@ -109,6 +109,7 @@ namespace se
         std::vector<std::vector<Cell>> _cells;
         std::vector<std::vector<bool>> _visited;
         std::queue<ImVec2> _queue;
+        std::stack<ImVec2> _s;
 
         uint16_t _width = 0;
         uint16_t _height = 0;
@@ -117,6 +118,7 @@ namespace se
         int _cell_spacing = 1;
         Cell *_start = nullptr;
         Cell *_end = nullptr;
+        bool _DFS_selected = false;
 
         // Private Methods
         void InitCells();

@@ -49,6 +49,7 @@ namespace se
         ResetCells();
 
         _queue.push(ImVec2(0, 0));
+        _s.push(ImVec2(0, 0));
     }
 
     bool Grid::InitStartCell(u_int16_t x, u_int16_t y)
@@ -63,6 +64,7 @@ namespace se
         _start->state = CellState::Start;
 
         _queue.push(ImVec2(x, y));
+        _s.push(ImVec2(x, y));
 
         return true;
     }
@@ -97,6 +99,9 @@ namespace se
     {
         while (!_queue.empty())
             _queue.pop();
+
+        while (!_s.empty())
+            _s.pop();
     }
 
     bool Grid::ResizeGrid(u_int16_t width, u_int16_t height)
@@ -164,7 +169,7 @@ namespace se
                     }
                 }
 
-                draw_list->AddRect(cell_p1, cell_p2, cellColor, current_cell->roundness);
+                draw_list->AddRectFilled(cell_p1, cell_p2, cellColor, current_cell->roundness);
             }
         }
 
@@ -175,67 +180,129 @@ namespace se
 
     void Grid::Update(bool &is_running)
     {
-        if (!is_running || _queue.empty() || _end->state == CellState::Visited)
-            return;
 
-        // BFS
-        auto current = _queue.front();
-        _queue.pop();
-
-        if (_visited[current.y][current.x])
-            return;
-
-        if (_cells[current.y][current.x].state == CellState::End)
+        if (_DFS_selected)
         {
-            is_running = false;
-            std::cout << "Found the end!" << std::endl;
-            ClearQueue();
-            return;
-        }
+            if (!is_running || _s.empty() || _end->state == CellState::Visited)
+                return;
 
-        _visited[current.y][current.x] = true;
+            // DFS
+            ImVec2 current = _s.top();
+            _s.pop();
 
-        if (_cells[current.y][current.x].state == CellState::Obstacle)
-            return;
+            if (_cells[current.y][current.x].state == CellState::End)
+            {
+                _end->state = CellState::Visited;
+                std::cout << "Found the end!" << std::endl;
+                ClearQueue();
+                is_running = false;
+            }
 
-        if (_cells[current.y][current.x].state != CellState::Start || _cells[current.y][current.x].state != CellState::End)
+            if (_visited[current.y][current.x])
+                return;
+
+            if (_cells[current.y][current.x].state == CellState::Unvisited)
+                _cells[current.y][current.x].state = CellState::Visited;
+
             _cells[current.y][current.x].state = CellState::Visited;
+            _visited[current.y][current.x] = true;
 
-        if (current.x + 1 < _width)
-        {
-            Cell *next = &_cells[current.y][current.x + 1];
-            if (next->state == CellState::Unvisited)
-                next->state = CellState::Near;
+            if (current.x > 0 && !_visited[current.y][current.x - 1] && _cells[current.y][current.x - 1].state != CellState::Obstacle)
+            {
+                Cell *next = &_cells[current.y][current.x - 1];
+                if (next->state == CellState::Unvisited)
+                    next->state = CellState::Near;
+                _s.push(ImVec2(current.x - 1, current.y));
+            }
 
-            _queue.push(next->coords);
+            if (current.x < _width - 1 && !_visited[current.y][current.x + 1] && _cells[current.y][current.x + 1].state != CellState::Obstacle)
+            {
+                Cell *next = &_cells[current.y][current.x + 1];
+                if (next->state == CellState::Unvisited)
+                    next->state = CellState::Near;
+                _s.push(ImVec2(current.x + 1, current.y));
+            }
+
+            if (current.y > 0 && !_visited[current.y - 1][current.x] && _cells[current.y - 1][current.x].state != CellState::Obstacle)
+            {
+                Cell *next = &_cells[current.y - 1][current.x];
+                if (next->state == CellState::Unvisited)
+                    next->state = CellState::Near;
+                _s.push(ImVec2(current.x, current.y - 1));
+            }
+
+            if (current.y < _height - 1 && !_visited[current.y + 1][current.x] && _cells[current.y + 1][current.x].state != CellState::Obstacle)
+            {
+                Cell *next = &_cells[current.y + 1][current.x];
+                if (next->state == CellState::Unvisited)
+                    next->state = CellState::Near;
+                _s.push(ImVec2(current.x, current.y + 1));
+            }
         }
-
-        if (current.x - 1 >= 0)
+        else
         {
-            Cell *next = &_cells[current.y][current.x - 1];
-            if (next->state == CellState::Unvisited)
-                next->state = CellState::Near;
 
-            _queue.push(next->coords);
-        }
+            if (!is_running || _queue.empty() || _end->state == CellState::Visited)
+                return;
 
-        if (current.y + 1 < _height)
-        {
-            Cell *next = &_cells[current.y + 1][current.x];
-            if (next->state == CellState::Unvisited)
-                next->state = CellState::Near;
+            // BFS
+            auto current = _queue.front();
+            _queue.pop();
 
-            _queue.push(next->coords);
-        }
+            if (_visited[current.y][current.x])
+                return;
 
-        if (current.y - 1 >= 0)
-        {
-            Cell *next = &_cells[current.y - 1][current.x];
-            if (next->state == CellState::Unvisited)
-                next->state = CellState::Near;
+            if (_cells[current.y][current.x].state == CellState::End)
+            {
+                is_running = false;
+                std::cout << "Found the end!" << std::endl;
+                ClearQueue();
+                return;
+            }
 
-            _queue.push(next->coords);
+            _visited[current.y][current.x] = true;
+
+            if (_cells[current.y][current.x].state == CellState::Obstacle)
+                return;
+
+            if (_cells[current.y][current.x].state != CellState::Start || _cells[current.y][current.x].state != CellState::End)
+                _cells[current.y][current.x].state = CellState::Visited;
+
+            if (current.x + 1 < _width)
+            {
+                Cell *next = &_cells[current.y][current.x + 1];
+                if (next->state == CellState::Unvisited)
+                    next->state = CellState::Near;
+
+                _queue.push(next->coords);
+            }
+
+            if (current.x - 1 >= 0)
+            {
+                Cell *next = &_cells[current.y][current.x - 1];
+                if (next->state == CellState::Unvisited)
+                    next->state = CellState::Near;
+
+                _queue.push(next->coords);
+            }
+
+            if (current.y + 1 < _height)
+            {
+                Cell *next = &_cells[current.y + 1][current.x];
+                if (next->state == CellState::Unvisited)
+                    next->state = CellState::Near;
+
+                _queue.push(next->coords);
+            }
+
+            if (current.y - 1 >= 0)
+            {
+                Cell *next = &_cells[current.y - 1][current.x];
+                if (next->state == CellState::Unvisited)
+                    next->state = CellState::Near;
+
+                _queue.push(next->coords);
+            }
         }
     }
-
 }
